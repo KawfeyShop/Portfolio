@@ -5,4 +5,30 @@ I eventually stumbled upon this command after some research:
 find / -type f -user bandit7 -group bandit6 -size 33c 2>/dev/null
 the 2>/dev/null does error handling and hides all error messages allowing us to view the file. 
 
-Bandit level 7
+Bandit level 7 first time use of grep:
+bandit7@bandit:~$ grep millionth "data.txt"
+millionth       TESKZC0XvTetK0S9xNwm25STk5iWrBvP
+
+Bandit level 8 first time with piping:
+bandit8@bandit:~$ cat data.txt | sort | uniq -u
+EN632PlfYiZbn3PhVK3XOGSlNInNE00t
+
+Bandit level 9 I tried so many variations of this and then had to look up the command. 
+bandit9@bandit:~$ strings data.txt | grep '^='
+=2""L(
+========== passwordk^
+========== is
+=Y!m
+========== G7w8LIi6J3kTb8A7j9LgrywtEUlyyp6s
+=r=_
+=uea
+
+Bandit level 10 Was very easy
+bandit10@bandit:~$ base64 --decode data.txt
+The password is 6zPeziLdR2RKNdNYFNb6nVCKzphlXHBM
+
+Bandit level 11 used ROT13 which was pretty cool 
+bandit11@bandit:~$ tr 'A-Za-z' 'N-ZA-Mn-za-m' < data.txt
+The password is JVNBBFSmZwKKOP0XbFXOoW8chDz5yVRv
+
+
