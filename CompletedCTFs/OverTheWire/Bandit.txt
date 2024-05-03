@@ -1,0 +1,8 @@
+Bandit level 1-5 were pretty simple and just required knowledge of how to ssh navigate a linux file system
+ 
+Bandit level 6 was tricky because you had to do error handling. 
+I eventually stumbled upon this command after some research:
+find / -type f -user bandit7 -group bandit6 -size 33c 2>/dev/null
+the 2>/dev/null does error handling and hides all error messages allowing us to view the file. 
+
+Bandit level 7

