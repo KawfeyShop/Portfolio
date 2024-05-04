@@ -1,0 +1,15 @@
+If a website gives you a means of uploading a file, it is extremely easy to get remote access via a reverse shell. 
+Because of this, websites have combatted this with filtering. 
+
+Windows uses file extension filtering, for example it wouldn't accept anything like a .exe file.
+
+Linux uses Magic Number validation, which looks at the hexdump of the start of the file to see the extension.
+
+However, both of these are semi easy to spoof. 
+
+Therefore, there are more filtering techniques. Some include length filtering, MIME filtering, file name filtering, and file content filtering.
+
+-Length Filtering checks to see if the length of the file is within the parameter as to not starve the server of resources. 
+-MIME is very easy to spoof as it just checks the file extension. 
+-File name filtering checks to see if there is already a file named that, in this case it gives it a different name so you may have to look around to exec it. 
+-File content filtering is the best as it checks the file to see if it's spoofing it, however, this is the most complex to implement. 
