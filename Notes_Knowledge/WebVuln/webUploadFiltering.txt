@@ -6,6 +6,17 @@ Websites use two type of over-arching filtering. One is Client-Side filtering an
 	-Ways to bypass this is to turn javascript off in your browser, intercept and modify the incoming page with burpsuite, intercept and modify the file upload, or send the file using curl. 
 	-You can intercept and modify the incoming or page through burpsuite by allowing file certain filetypes on the client side javascript script. 
 -Server Side filtering is when the filtering script is ran on the server. This is more difficult to bypass. 
+	-A lot of serverside filtering is done throught a blacklist of filetypes. It is common to look for the last period to determine the file type. Thus we are able to use a null byte to rip off the last part of it.
+	-Another way to bypass is through trial and error trying different types of php files like php3, php5, phar, etc. 
+	-Another way to bypass this is by adding the .php file extension after something like .jpg. So with this it'd be like logan.jpg.php. This is good when they are doing only whitelisting of filetypes. They see the jpg and think, yes this must be right/acceptable. 
+	-PHP extensions: https://en.wikipedia.org/wiki/PHP
+-Bypassing Server Side Magic Numbers:
+	-Magic numbers are the first thing in a file. They are hexadecimals. Magic Numbers are 4 bytes long. 
+	-File signature magic numbers https://en.wikipedia.org/wiki/List_of_file_signatures
+	-Since the magic number is 4 bytes long append the start of the file with 4 characters, they can be anything so "AAAA"
+	-Next open hexeditor and change these 4 bytes to the acceptable file type for instance, .jpg would be: FF D8 FF DB. This will convince a magic number filter that it's a JPG file. 
+	-Upload the file and then navigate and open it. Sometimes you may not be able to open the uploads page and instead have to open it through the url such as: http://magic.uploadvulns.thm/graphics/shell.php
+
 
 Windows uses file extension filtering, for example it wouldn't accept anything like a .exe file.
 Linux uses Magic Number validation, which looks at the hexdump of the start of the file to see the extension.
