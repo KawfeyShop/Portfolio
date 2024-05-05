@@ -1,8 +1,13 @@
 If a website gives you a means of uploading a file, it is extremely easy to get remote access via a reverse shell. 
 Because of this, websites have combatted this with filtering. 
 
-Windows uses file extension filtering, for example it wouldn't accept anything like a .exe file.
+Websites use two type of over-arching filtering. One is Client-Side filtering and one is Server-Side filtering
+-Client Side filtering is when the filtering script runs before the file is uploaded to the server. This leaves security holes as you can exploit this by spoofing it.
+	-Ways to bypass this is to turn javascript off in your browser, intercept and modify the incoming page with burpsuite, intercept and modify the file upload, or send the file using curl. 
+	-You can intercept and modify the incoming or page through burpsuite by allowing file certain filetypes on the client side javascript script. 
+-Server Side filtering is when the filtering script is ran on the server. This is more difficult to bypass. 
 
+Windows uses file extension filtering, for example it wouldn't accept anything like a .exe file.
 Linux uses Magic Number validation, which looks at the hexdump of the start of the file to see the extension.
 
 However, both of these are semi easy to spoof. 
