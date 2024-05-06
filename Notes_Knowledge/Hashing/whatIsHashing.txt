@@ -3,10 +3,16 @@ Encoding is not the same as encryption.
 Collision is a big problem with hashing and can lead to a hash being cracked.
 Collision is when two pieces of data are stored at the same hash.
 Rounds are how many times a piece of data is hashed during the loop. 
-
+Salting is used to avoid collision this is added at the front or back of a hash and is generated randomly. This doesn't need to be private. 
+Graphics cards are the fastest way to crack hashes. -some like bcrypt are designed so they are roughly the same speed on cpus as gpus
+Hashing is used for integrity checking for instance if two files have the same hash then they have the same data.
+HMACs are used to check if the person who posted a message is who they claim to be. It also ensures that the file hasn't been corrupted or modified. This uses a secret key.
 
 Common password hashing:
 Unix: $format$rounds$salt$hash
 md5crypt: $1$
 Bcrypt: $2$, $2a$, $2b$, $2x$, $2y$
 sha512crypt: $6$
+
+Windows NTLM has 32 characters.
+sha512crypt runs 5000 rounds.
