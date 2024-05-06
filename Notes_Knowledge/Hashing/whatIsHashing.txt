@@ -1,0 +1,12 @@
+Hashing is a way to not store a password or data directly it uses an algorithm and is extremely hard to crack. If you want to crack a password you have to crack them individually.
+Encoding is not the same as encryption. 
+Collision is a big problem with hashing and can lead to a hash being cracked.
+Collision is when two pieces of data are stored at the same hash.
+Rounds are how many times a piece of data is hashed during the loop. 
+
+
+Common password hashing:
+Unix: $format$rounds$salt$hash
+md5crypt: $1$
+Bcrypt: $2$, $2a$, $2b$, $2x$, $2y$
+sha512crypt: $6$

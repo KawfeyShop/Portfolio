@@ -1,0 +1,1 @@
+If you aren't recieving client-side javascript files, clear all history. Also ensure it's an allowed file extension in proxy settings.

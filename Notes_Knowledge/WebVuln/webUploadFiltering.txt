@@ -16,7 +16,17 @@ Websites use two type of over-arching filtering. One is Client-Side filtering an
 	-Since the magic number is 4 bytes long append the start of the file with 4 characters, they can be anything so "AAAA"
 	-Next open hexeditor and change these 4 bytes to the acceptable file type for instance, .jpg would be: FF D8 FF DB. This will convince a magic number filter that it's a JPG file. 
 	-Upload the file and then navigate and open it. Sometimes you may not be able to open the uploads page and instead have to open it through the url such as: http://magic.uploadvulns.thm/graphics/shell.php
-
+-Methodology for exploiting upload vulnerabilites:
+	1. use an extension to enumerate the website to see what it's coded in etc. Or use burpsuite and intercept the response to look for server or x-powered-by. 
+	2. Look at source code for file upload filters
+	3. Figure out where a normal non-malicious file is headed this is commonly done using gobuster.
+		- the flag x is good at looking for specific extensions such as php.
+	4. Upload malicious file to determine if client side or server side filtering
+		-if server side: 
+			1. Try a non valid file extension, this checks for blacklisted extensions.
+			2. Change the magic number of an acceptable file to a commonly seen malicious file type. This checks for magic number filtering.
+			3. Upload innocent file and with burpsuite, intercept and change the MIME to check for MIME filtering.
+			4. Try different file lengths to check for a file length filter. 
 
 Windows uses file extension filtering, for example it wouldn't accept anything like a .exe file.
 Linux uses Magic Number validation, which looks at the hexdump of the start of the file to see the extension.
