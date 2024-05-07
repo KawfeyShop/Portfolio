@@ -1,0 +1,3 @@
+John The Ripper is a hash cracking tool. It's syntax is:
+john [options] file
+The file contains the hash. 
