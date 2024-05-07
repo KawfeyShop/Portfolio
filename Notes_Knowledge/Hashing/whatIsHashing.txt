@@ -16,3 +16,10 @@ sha512crypt: $6$
 
 Windows NTLM has 32 characters.
 sha512crypt runs 5000 rounds.
+
+There are two classes that help us understand the efficiency of hashing algorithms:
+P(polynomial time): the problems which solutions can be found in polynomial time
+NP(Non-deterministic Polynomial Time): A solution can be checked quickly however, we don't know if there is a fast algorithm for these types of problems. 
+Essentially class P would be the time to hash and NP would be for unhashing.
+
+Hashes can be cracked by using a wordlist, this is called a dictionary attack. Essentially once you know the hashing algorithm you can use it to hash the wordlist to see if a password matches.

@@ -1,3 +1,24 @@
 John The Ripper is a hash cracking tool. It's syntax is:
 john [options] file
 The file contains the hash. 
+
+John uses dictionary attacks to crack passwords. 
+
+To explicitly tell john which hash type to use do --format=[format]
+If you're dealing with a normal hashtype use raw-[format] in front of it i.e. raw-md5.
+You can search formats by using john --list=formats | grep -iF "md5"
+
+To use a different wordlist do --wordlist=[path]
+
+NTLM passwords are used by linux to crack the hash use --format=nt
+For /etc/shaddow hashes which are linux auth passwords you must use the /etc/passwd file as well as the etc/shadow file... there is a work around:
+You can unshadow it 
+Syntax: unshadow [path to passwd] [path to shadow]
+i.e. unshadow local_passwd local_shadow > unshadowed.txt
+The format for these passwords are sha512crypt
+The local_passwd file should look like:
+root:x:0:0::/root:/bin/bash
+The local_shadow file should look like:
+root:$6$2nwjN454g.dv4HN/$m9Z/r2xVfweYVkrr.v5Ft8Ws3/YYksfNwq96UL1FX0OJjY1L6l.DS3KEVsZ9rOVLB/ldTeEL/OIhJZ4GMFMGA0:18576::::::
+
+
