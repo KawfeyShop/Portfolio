@@ -21,4 +21,12 @@ root:x:0:0::/root:/bin/bash
 The local_shadow file should look like:
 root:$6$2nwjN454g.dv4HN/$m9Z/r2xVfweYVkrr.v5Ft8Ws3/YYksfNwq96UL1FX0OJjY1L6l.DS3KEVsZ9rOVLB/ldTeEL/OIhJZ4GMFMGA0:18576::::::
 
+Single crack mode: john --single --format=[format] [file]
+To add a word for word mangling using single do [username]:[hash]
+Word Mangling: when you take a username or other information and generate possible passwords for instance username: Logan it would come up with the password: Logan1, Logan2, etc. 
+Gecos: John can go into and look at name of directories etc. used in etc/passwd and etc/shadow the gecos are seperated by a : and john turns this into the working dictionary. 
+
+You can leverage password rules to crack passwords faster. For instance if you know the length, capitalization rules, etc. you can tell john these to crack the password faster. 
+custom rules are defined in john.conf :: /etc/john/john.conf
+to do custom rules, use regex. To find the rules visit here at task 8 https://tryhackme.com/r/room/johntheripper0
 
