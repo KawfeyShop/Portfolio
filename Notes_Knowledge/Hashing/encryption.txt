@@ -55,4 +55,25 @@ root CA's say they trust certain organisations. This is with certs below them.
 The chain doesn't just stop there it's a long chain. 
 To understand this concept better: https://robertheaton.com/2014/03/27/how-does-https-actually-work/
 
-SSH Authentication:
+DIFFIE_HELLMAN_KEY_EXCHANGE:
+Essentially there is person a and b they have their common key which is c
+they use their keys ac and bc and combine these to be abc 
+they then use these identical keys to communicate to one another. 
+https://www.youtube.com/watch?v=NmM9HA2MQGI -video to explain
+
+PGP_GPG_AES
+PGP: Pretty Good Privacy. Used to encrypt files. 
+GPG: GnuPG. Essentially the open source version of PGP. You may need to use this in ctfs. There is a gpg2john function.
+To use GPG:
+import public key: gpg --import tryhackme.key
+then decrypt:
+gpg --decrypt message.gpg
+AES: Sometimes known as Rijndael. Stands for Advanced Encryption Standard. It replaced the broken DES. 
+Both operate on blocks of data. (fixed size series of bits)
+https://www.youtube.com/watch?v=O4xNJsjtN6E -how AES works.
+
+QUANTUM_COMPUTING:
+Encrypting data will soon be threatened by quantum computers
+RSA, Elliptical Curve Cryptography, AES, and Triple DES are likely to be vulnerable to this
+The NSA recommends RSA-3072 or AES-256 or better.
+learn more: https://doi.org/10.6028/NIST.IR.8105
