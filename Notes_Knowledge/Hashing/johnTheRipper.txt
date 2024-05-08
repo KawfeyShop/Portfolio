@@ -10,6 +10,7 @@ You can search formats by using john --list=formats | grep -iF "md5"
 
 To use a different wordlist do --wordlist=[path]
 
+UNSHADOW:
 NTLM passwords are used by linux to crack the hash use --format=nt
 For /etc/shaddow hashes which are linux auth passwords you must use the /etc/passwd file as well as the etc/shadow file... there is a work around:
 You can unshadow it 
@@ -21,12 +22,30 @@ root:x:0:0::/root:/bin/bash
 The local_shadow file should look like:
 root:$6$2nwjN454g.dv4HN/$m9Z/r2xVfweYVkrr.v5Ft8Ws3/YYksfNwq96UL1FX0OJjY1L6l.DS3KEVsZ9rOVLB/ldTeEL/OIhJZ4GMFMGA0:18576::::::
 
+SINGLE_CRACK:
 Single crack mode: john --single --format=[format] [file]
 To add a word for word mangling using single do [username]:[hash]
 Word Mangling: when you take a username or other information and generate possible passwords for instance username: Logan it would come up with the password: Logan1, Logan2, etc. 
 Gecos: John can go into and look at name of directories etc. used in etc/passwd and etc/shadow the gecos are seperated by a : and john turns this into the working dictionary. 
 
+CUSTOM_RULES:
 You can leverage password rules to crack passwords faster. For instance if you know the length, capitalization rules, etc. you can tell john these to crack the password faster. 
 custom rules are defined in john.conf :: /etc/john/john.conf
 to do custom rules, use regex. To find the rules visit here at task 8 https://tryhackme.com/r/room/johntheripper0
 
+ZIP:
+You can actually crack a password protected zip password file with john using zip2john
+zip2john [options] [zip file] > [output file]
+This will output a readable file for john which will give you the password for the zip file once you run it through john again. 
+use unzip to unzip the file
+
+PASSWORD_PROTECTED_RAR_ARCHIVE: 
+Using the same method as above we can do this:
+rar2john secure_1605054844670.rar > rar.txt
+to unzip a rar file:
+unrar x ./secure_1605054844670.rar
+
+CRACKING_SSH_KEY_PASSWORDS:
+ssh2john takes the id_rsa private key and outputs it into a hash format john can work with. 
+i.e.:
+ssh2john id_rsa_1605800988509.id_rsa > text.txt

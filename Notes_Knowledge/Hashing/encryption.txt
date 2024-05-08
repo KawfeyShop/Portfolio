@@ -1,0 +1,58 @@
+TERMS:
+Cipertext - result of encrypted plain text
+Cipher - A method of encrypting or decrypting data
+Encryption - Transforming data into ciphertext using a cipher
+Asymmetric Encryption - Uses different keys to encrypt and decrypt
+Symmetric Encryption - Uses the same key to encrypt and decrypt.
+Cryptanalysis - Attacking cryptography by finding a weakness in underlying maths
+Alice and Bob - Representation of 2 people trying to communicate
+
+NOTES:
+Passphrases protect keys.
+Encryption helps verify almost everything from passwords, to checksums, etc. 
+DON'T ENCRYPT PASSOWRDS 
+Don't trust DES because it's broken. 
+Symmetric keys use smaller keys than asymmetric so they are faster
+Asymmetric uses 2 keys 1 to encrypt 1 to decrypt they use a key pair of a public and private keys
+HTTPS symmetric keys are better. 
+
+RSA:
+Used a lot
+Uses the combination of a large prime number. 
+tool for attacking RSA: https://github.com/Ganapati/RsaCtfTool
+Variables: p, q: large prime numbers; n: product of p and q; n, e: public key; n, d= private key; m: plaintext; c: ciphertext
+Math behind RSA: https://muirlandoracle.co.uk/2020/01/29/rsa-encryption/
+
+HOW_IT_WORKS_ON_SERVERS:
+So how do you get it so that only you see it and nobody snoops
+I don't think I can explain it better so here it is from tryhackme:
+Imagine you have a secret code, and instructions for how to use the secret code. If you want to send your friend the instructions without anyone else being able to read it, what you could do is ask your friend for a lock.
+Only they have the key for this lock, and we’ll assume you have an indestructible box that you can lock with it.
+If you send the instructions in a locked box to your friend, they can unlock it once it reaches them and read the instructions.
+After that, you can communicate in the secret code without risk of people snooping.
+In this metaphor, the secret code represents a symmetric encryption key, the lock represents the server’s public key, and the key represents the server’s private key.
+You’ve only used asymmetric cryptography once, so it’s fast, and you can now communicate privately with symmetric encryption.
+
+
+HOW_DOES_HTTPS_WORK: https://robertheaton.com/2014/03/27/how-does-https-actually-work/
+It uses digital signatures and certificates.
+
+DIGITAL_SIGNATURES:
+These prove the authenticity of files. They show who created or modified them. 
+In asymmetric cryptography, you can produce a signature with a private key. This can be verified using your public key.
+The simplest form of digital signature is encrypting with your private key so that people can decrypt it using your public key.
+
+CERTIFICATES:
+These are linked to digital signatures. 
+These are used a lot in HTTPS.
+This is how you know you're talking to the real website for example, the real google.com
+Each webserver will have their own certificate that says they are who they are. 
+
+CHAIN_OF_TRUST:
+Certificates have this.
+root CA (certificate authority): automatically trusted by your device, OS, or browser from install.
+root CA's say they trust certain organisations. This is with certs below them. 
+The chain doesn't just stop there it's a long chain. 
+To understand this concept better: https://robertheaton.com/2014/03/27/how-does-https-actually-work/
+
+SSH Authentication:
