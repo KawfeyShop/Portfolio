@@ -26,4 +26,32 @@ BUILT_IN_CONTAINERS_TO_ACTIVE_DIRECTORY:
     Users: Default users and groups that apply to a domain-wide context.
     Managed Service Accounts: Holds accounts used by services in your Windows domain.
 
+DOMAIN_CONTROLLERS:
+Control every user on the domain, get and store their credentials etc.
+Two protocols can be used for network authentication:
+Kerberos: Default protocol in recent domains
+NetNTLM: Legacy protocol for compatibility 
 
+KERBEROS:
+Users are assigned tickets. These can be shown to the network to prove you've used the network before and are able to use it. 
+Takes these steps when authenticating:
+1. user sends username and a timestamp encrypted using a key from their password to the KDC (Key Distribution Center) KDC gives a ticket back showing acceptance. They are also given a session key. 
+2. Whenever a user tries to ask for a network they will send their tgt for a tgs (ticket granting server). These allow access to services requested. To request you will also provide a Service Principal Name (SPN). This indicates the service and server name intended to access. KDS will then send a service session key upon approval. The TGS is encrypted using a key derived from the service owner hash. 
+3. you are then able to use the services using your tickets.
+
+NETNTLM:
+Random numbers are generated and sent as challenges. The client combines their NTLM password hash with the challenge that is sent back. The server forwards to DC. The server uses the challenge to recalculate and verify the challenge sent back. Server forwards authentication.
+
+TREES:
+When companies expand they are in need of many DC's 
+This is just like binary trees there is a root that controls leaf's and other inner objects. 
+This is a really good system if you have multiple companies within a company that are all using different group policies that way you don't have to extent a ton of OU's
+In trees there are enterprise admins groups that grant users admin privileges.
+
+FORESTS:
+A forest is when domains are linked usually through merges and acquisitions but there isn't a root.
+
+TRUST_RELATIONSHIPS:
+This allows communications and access granting between DC's in trees and forests. 
+one-way trust relationship is when domain a trusts domain b. so domain a has access to domain b. 
+mutual/two-way trust is when both domains have access to each other. 
