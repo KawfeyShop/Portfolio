@@ -1,0 +1,6 @@
+TERMS:
+Horizontal Privilege Escalation: Travel between users with the same privileges/access.
+Vertical Privilege Escalation: Going from an account of lesser access to one with higher. For instance a regular user to an admin. 
+
+NOTES:
+What is privesc? Privilege escalation is going from lower to higher permission. This usually involves exploiting a vulnerability that gives you unauthorized access to certain resources.
