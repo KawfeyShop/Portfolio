@@ -1,0 +1,4 @@
+Started 6/12/2024
+Samba is referred to as a network file system.
+Based on SMB
+enum shares: nmap -p 445 --script=smb-enum-shares.nse,smb-enum-users.nse 10.10.188.230
