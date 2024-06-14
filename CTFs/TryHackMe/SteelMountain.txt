@@ -1,0 +1,87 @@
+Task 1: Introduction
+Who is the employee of the month:
+Bill Harper (found by looking at page source code).
+
+Task 2: Initial Access
+1.Scan the machine with nmap. What is the other port running a web server on? 8080
+nmap -sV -sC -v 10.10.237.176
+Discovered open port 139/tcp on 10.10.237.176
+Discovered open port 80/tcp on 10.10.237.176
+Discovered open port 135/tcp on 10.10.237.176
+Discovered open port 445/tcp on 10.10.237.176
+Discovered open port 3389/tcp on 10.10.237.176
+Discovered open port 8080/tcp on 10.10.237.176
+Discovered open port 49152/tcp on 10.10.237.176
+Discovered open port 49156/tcp on 10.10.237.176
+Discovered open port 49153/tcp on 10.10.237.176
+Discovered open port 49155/tcp on 10.10.237.176
+Discovered open port 49154/tcp on 10.10.237.176
+PORT      STATE SERVICE            VERSION
+80/tcp    open  http               Microsoft IIS httpd 8.5
+|_http-server-header: Microsoft-IIS/8.5
+| http-methods: 
+|   Supported Methods: OPTIONS TRACE GET HEAD POST
+|_  Potentially risky methods: TRACE
+|_http-title: Site doesn't have a title (text/html).
+135/tcp   open  msrpc              Microsoft Windows RPC
+139/tcp   open  netbios-ssn        Microsoft Windows netbios-ssn
+445/tcp   open  microsoft-ds       Microsoft Windows Server 2008 R2 - 2012 microsoft-ds
+3389/tcp  open  ssl/ms-wbt-server?
+| rdp-ntlm-info: 
+|   Target_Name: STEELMOUNTAIN
+|   NetBIOS_Domain_Name: STEELMOUNTAIN
+|   NetBIOS_Computer_Name: STEELMOUNTAIN
+|   DNS_Domain_Name: steelmountain
+|   DNS_Computer_Name: steelmountain
+|   Product_Version: 6.3.9600
+|_  System_Time: 2024-06-14T03:34:26+00:00
+| ssl-cert: Subject: commonName=steelmountain
+| Issuer: commonName=steelmountain
+| Public Key type: rsa
+| Public Key bits: 2048
+| Signature Algorithm: sha1WithRSAEncryption
+| Not valid before: 2024-06-13T03:23:03
+| Not valid after:  2024-12-13T03:23:03
+| MD5:   90f0:a13e:a347:cddd:ccfb:4548:d15e:37f2
+|_SHA-1: 5225:3b71:47f3:3b77:7f44:8952:e757:4888:6d63:878b
+|_ssl-date: 2024-06-14T03:34:31+00:00; -3s from scanner time.
+8080/tcp  open  http               HttpFileServer httpd 2.3
+|_http-title: HFS /
+|_http-server-header: HFS 2.3
+|_http-favicon: Unknown favicon MD5: 759792EDD4EF8E6BC2D1877D27153CB1
+| http-methods: 
+|_  Supported Methods: GET HEAD POST
+49152/tcp open  msrpc              Microsoft Windows RPC
+49153/tcp open  msrpc              Microsoft Windows RPC
+49154/tcp open  msrpc              Microsoft Windows RPC
+49155/tcp open  msrpc              Microsoft Windows RPC
+49156/tcp open  msrpc              Microsoft Windows RPC
+Service Info: OSs: Windows, Windows Server 2008 R2 - 2012; CPE: cpe:/o:microsoft:windows
+
+Host script results:
+| smb-security-mode: 
+|   account_used: guest
+|   authentication_level: user
+|   challenge_response: supported
+|_  message_signing: disabled (dangerous, but default)
+| nbstat: NetBIOS name: STEELMOUNTAIN, NetBIOS user: <unknown>, NetBIOS MAC: 02:aa:0d:d5:8c:ad (unknown)
+| Names:
+|   STEELMOUNTAIN<20>    Flags: <unique><active>
+|   STEELMOUNTAIN<00>    Flags: <unique><active>
+|_  WORKGROUP<00>        Flags: <group><active>
+| smb2-time: 
+|   date: 2024-06-14T03:34:26
+|_  start_date: 2024-06-14T03:22:55
+|_clock-skew: mean: -3s, deviation: 0s, median: -3s
+| smb2-security-mode: 
+|   3:0:2: 
+|_    Message signing enabled but not required
+
+2. Take a look at the other web server. What file server is running?
+Rejetto HTTP File Server
+
+3. What is the CVE number to exploit this file server?
+2014-6287
+
+4. Use Metasploit to get an initial shell. What is the user flag:
+b04763b6fcf51fcd7c13abc7db4fd365
