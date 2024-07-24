@@ -1,0 +1,10 @@
+First things first I added the ip into my /etc/hosts
+10.10.11.18	usage.htb
+going to the website i found admin.usage.htb so I also added that to /etc/hosts
+
+Running nmap I found 2 ports: 22 and 80
+
+I started ffuf
+
+
+

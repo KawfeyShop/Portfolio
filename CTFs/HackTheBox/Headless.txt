@@ -1,0 +1,13 @@
+We run an nmap scan and see a website on port 5000.
+
+I go to website.
+
+I use dirb and see a directory called /dashboard
+
+I don't have access to it. 
+
+I open burpsuite and it asks for a cookie: is_admin
+
+I use xss to go back to the support page and fill out a random form. 
+
+Capture the request with burpsuite and enter the following script: 

