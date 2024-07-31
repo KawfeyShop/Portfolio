@@ -1,5 +1,4 @@
-# Portfolio
-Portfolio of Logan Coffey
+# Portfolio of Logan Coffey
 This portfolio is slightly unconventional. I want it to be a place that stores a vast majority of my knowledge. Because of this, I will be adding notes and various skills that I've learned. I will add projects as I finish them. Essentially, I want this portfolio to act as a place of reference of my knowledge that is trackable (i.e. when I learn certain skills), and to act as a traditional portfolio with my projects. Additionally, I want it to track my story. 
 
 ## The Story:
