@@ -3,7 +3,7 @@ This portfolio is slightly unconventional. I want it to be a place that stores a
 
 ## The Story:
 ### Early Life:
-I grew up in South-West Ohio. Growing up I found an early love for computers. I started playing games and dedicated myself in high school and became a top 63 player in North America in my respective game. Because of this, I learned early on what it takes to work towards being the best. And while I realize now that I may have missed out on certain aspects of life and had am improper balance, I will always be greatful for this mindset. I carry it everywhere and employ it wherever possible. 
+I grew up in South-West Ohio. Growing up I found an early love for computers. I started playing games and dedicated myself in high school and became a top 63 player in North America in my respective game. Because of this, I learned early on what it takes to work towards being the best. And while I realize now that I may have missed out on certain aspects of life and had an improper balance, I will always be greatful for this mindset. I carry it everywhere and employ it wherever possible. 
 
 ### Start of College
 In 2021, I started attending school at Bowling Green State University. I changed majors multiple times but decided to settle on Computer Science with a specialization in Digital Forensics.
